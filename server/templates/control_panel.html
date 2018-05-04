@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="UTF-8" />
+        <title>Control_panel</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <style type="text/css" media="screen">
+            .header{
+                text-align: center;
+                border: 20px 0px;
+            }
+            .nopadding {
+                padding: 0 !important;
+                margin: 0 !important;
+
+            }
+        </style>
+
+    </head>
+
+    <body>
+        <nav class="navbar navbar-inverse">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="#">Mumma Mia Control Panel</a>
+                </div>
+                <!--
+                - <ul class="nav navbar-nav">
+                    -     <li class="active"><a href="#">Home</a></li>
+                    -     <li><a href="#">Page 1</a></li>
+                    -     <li><a href="#">Page 2</a></li>
+                    -     <li><a href="#">Page 3</a></li>
+                    - </ul>
+                -->
+            </div>
+
+        </nav>
+        {% include "counter.html" %}
+        <div class="container">
+            <div class="row">
+                <div class="header">
+                    <h3>設備清單</h3>
+                </div>
+                <div class="status">
+                    <div style="font-weight: bold;">
+                        <div class="col-sm-3">設備ID</div>
+                        <div class="col-sm-3">IP位置</div>
+                        <div class="col-sm-3">裝置備註</div>
+                        <div class="col-sm-3">最後更新時間</div>
+                    </div>
+                    {% for device in devices %}
+                        <div class="col-sm-3">{{device.name}}</div>
+                        <div class="col-sm-3">{{device.ip}}</div>
+                        <div class="col-sm-3">{{device.note}}</div>
+                        <div class="col-sm-3">{{device.updated}}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <br>
+
+            <div>
+                <div class="header">
+                    <h3>主控台</h3>
+                </div>
+                <form action="/control_panel" method="post" accept-charset="utf-8">
+                    <div class="row">
+                        {% csrf_token %}
+                        <div class="col-sm-3">
+                            <input type="text" class="form-control" name="ip" placeholder="IP" id="test" />
+                        </div>
+
+                        <div class="col-sm-3">
+                            <input type="text" class="form-control" name="command" placeholder="PORT" value="80"/>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="text" class="form-control" name="command" placeholder="COMMAND" />
+                        </div>
+
+
+                        <div class="col-sm-3">
+                            <button type="submit" class="btn btn-primary btn-block">手動指令送出</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <br>
+            <div class="row">
+                <div class="col-sm-3">
+                    <button type="submit" class="btn btn-success btn-block">啟動</button>
+                </div>
+                <div class="col-sm-3">
+                    <button  onclick="go()" type="submit" class="btn btn-default btn-block">鼓勵</button>
+                </div>
+                <div class="col-sm-3">
+                    <button type="submit" class="btn btn-danger btn-block">強制終止</button>
+                </div>
+                <div class="col-sm-3">
+                    <button type="submit" class="btn btn-warning btn-block">重設</button>
+                </div>
+
+
+
+            </div>
+            <br>
+            <div class="row">
+                <div class="status" style="font-weight: bold;">
+                    <div class="col-sm-3">設備名稱</div>
+                    <div class="col-sm-3">目前狀態</div>
+                    <div class="col-sm-3">最終更新時間</div>
+                    <div class="col-sm-3">狀態強制變更</div>
+                </div>
+                {% for status in statuses %}
+                    <form action="/force_change_status" method="get" accept-charset="utf-8">
+
+                        <div class="col-sm-3">{{status.device}}</div>
+                        <div class="col-sm-3">{{status.command}}</div>
+                        <div class="col-sm-3">{{status.updated}}</div>
+                        <div class="col-sm-3">
+                            <div class="col-sm-8 nopadding">
+                                <div class="form-group">
+                                    <input type="hidden" value="{{status.device.id}}" name="device" id=""/>
+                                    <select class="form-control" name="command" id="changeTarget">
+                                        {% for command in commands %}
+                                            {% if command.device.id == status.device.id %}
+                                                <option>{{command.name}} || {{command.id}}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <button type="submit" class="btn btn-default">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
+
+    </body>
+    <script charset="utf-8">
+        function go() {
+            alert("畢製加油!");
+        }
+    </script>
+</html>
