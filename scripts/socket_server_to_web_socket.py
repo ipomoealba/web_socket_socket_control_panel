@@ -52,6 +52,7 @@ server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind((LOCALHOST, PORT))
 print("Server started")
 print("Waiting for client request..")
+print("Listen in: " + LOCALHOST, PORT)
 
 while True:
     server.listen(1)

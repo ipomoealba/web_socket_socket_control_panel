@@ -4,11 +4,12 @@ import json
 #  from server.settings import SOCKET_SERVER_PORT, SOCKET_SERVER_IP
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
-from .models import Device, Command, Status
+from .models import Device, Command, Status, Rule
 from django.http import JsonResponse
 from django.utils.safestring import mark_safe
 from .tasks import sendData
-
+from util.rules import automator 
+from util.websocket_help import replySocket
 # chat/views.py
 #  from django.shortcuts import render
 
@@ -95,8 +96,14 @@ def ajax_update_device_status(request):
     }
     return JsonResponse(data)
 
+def status_update(request):
+    device_ip = get_client_ip(request)
+    status = request.GET.get("STATUS", False)
+    if status:
+        automator(device_ip, "Unknown is o.k.", "STATUS="+status)
+        return JsonResponse({"status": "complete"})
+        
+    else:
+        replySocket(device_ip, "Unknown", "Updator" + device_ip, "Status Not Found: " + status, "error")
+        return JsonResponse({"status": "error"})
 
-def rule_check(request):
-    ip = request.GET.get("ip", False)
-    port = request.GET.get("port", False)
-    command = request.GET.get("message", False)

@@ -50,7 +50,11 @@ class StatusConsumer(WebsocketConsumer):
             sendRequest.delay(ip, port, message)
         elif data_type == 'socket':
             message_header = '[Get Socket Message]'
-            automator(ip, port, message)
+            try:
+                tmp = json.loads(message)
+                automator(ip, port, message)
+            except:
+                pass
         elif data_type == 'error':
             message_header = '[!!!]'
         elif data_type == 'return':
