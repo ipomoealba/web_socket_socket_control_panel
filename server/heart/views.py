@@ -1,22 +1,16 @@
 import requests
 
-from server.settings import SOCKET_SERVER_PORT, SOCKET_SERVER_IP
+import json
+#  from server.settings import SOCKET_SERVER_PORT, SOCKET_SERVER_IP
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from .models import Device, Command, Status
 from django.http import JsonResponse
-
+from django.utils.safestring import mark_safe
 from .tasks import sendData
 
-
-def rule(device, flag):
-    if device == "unity":
-        if flag == "":
-            pass
-
-
-def unity_test(request):
-    return JsonResponse({"status": "OK"})
+# chat/views.py
+#  from django.shortcuts import render
 
 
 def get_client_ip(request):
@@ -26,12 +20,6 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
-
-
-def django_view(request):
-    # get the response from the URL
-    response = requests.get('http://example.com')
-    return response.headers
 
 
 def device_handshaker(request):
@@ -47,13 +35,6 @@ def device_handshaker(request):
         device.save()
         print("Create new Device: ", device_name, " ip: ", device_ip)
     return HttpResponse("got")
-
-
-def control(request):
-    commands = Command.objects.all()
-    return render(request, "arduino-control-panel.html", {
-        "commands": commands,
-    })
 
 
 def control_panel(request):
@@ -74,24 +55,48 @@ def control_panel(request):
         return render(request, "control_panel.html", {
             "status": "success",
             "devices": devices,
-            })
+        })
     else:
         return render(request, "control_panel.html", {
             "devices": devices,
             "commands": commands,
-            "statuses": status 
+            "statuses": status
         })
 
 
 def force_change_status(request):
-    device = request.GET.get("device", False)
-    command = request.GET.get("command", False)
-    if device and command:
-        print(device, command)
-        Status.objects.filter(device__id=device).update(command=command.split("||")[1])
-        #  return JsonResponse({"status": "succcess"})
+    device_id = request.GET.get("device", False)
+    command_f = request.GET.get("command", False)
+    if device_id and command_f:
+        device = Device.objects.get(id=device_id)
+        command = Command.objects.get(id=command_f.split("||")[1])
+        Status.objects.filter(device__id=device_id).update(
+            command=command_f.split("||")[1])
+        if "Unity" in command_f:
+            print("send",  device.ip, "88", command.command)
+            sendData.delay(device.ip, device.port, command.command)
+        else:
+            result = requests.get(
+                "http://" + device.ip + "/" + command.command)
+            print(result)
         return HttpResponseRedirect("/")
 
 
-def send(request):
-    return HttpResponseRedirect("/path/")
+def ajax_update_device_status(request):
+    device_id = request.GET.get("device_id", False)
+    command_id = request.GET.get("command_id", False)
+    Status.objects.filter(device__id=device_id).update(
+        command=command_id)
+    status = Status.objects.get(device__id=device_id)
+    data = {
+        'status_id': status.id,
+        'status_update': status.updated,
+        'status_command': Command.objects.get(id=command_id).name
+    }
+    return JsonResponse(data)
+
+
+def rule_check(request):
+    ip = request.GET.get("ip", False)
+    port = request.GET.get("port", False)
+    command = request.GET.get("message", False)

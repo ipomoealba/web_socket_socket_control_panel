@@ -5,7 +5,7 @@ class DataSender(object):
     def __init__(self, ip, port):
         super(DataSender, self).__init__()
         self.ip = ip
-        self.port = port
+        self.port = int(port)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect(self):
@@ -13,8 +13,9 @@ class DataSender(object):
 
     def send(self, data):
         self.sock.send(data.encode('utf-8'))
-        str = self.sock.recv(1024)
-        print(str.decode("utf-8"))
+        reply = self.sock.recv(1024).decode("utf-8")
+        return reply
+        #  print(str.decode("utf-8"))
 
     def close(self):
         self.sock.close()

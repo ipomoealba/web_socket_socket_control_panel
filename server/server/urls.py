@@ -16,14 +16,14 @@ Including another URLconf
 from django.contrib import admin
 from django.conf.urls import url, include
 from django.urls import path
-from heart.views import control, device_handshaker, unity_test, control_panel, force_change_status 
+from heart.views import device_handshaker, control_panel, force_change_status, ajax_update_device_status
 
 urlpatterns = [
+
     url(r'^jet/', include('jet.urls', 'jet')),
     path('admin/', admin.site.urls),
     url(r'^device_handshaker/$', device_handshaker),
-    url(r'^control/$', control),
-    url(r'^unity_test/$', unity_test),
     url(r'^force_change_status/$', force_change_status),
+    url(r'^ajax/update_device_status/$', ajax_update_device_status),
     url(r'^$', control_panel)
 ]

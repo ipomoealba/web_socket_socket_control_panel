@@ -11,15 +11,32 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
-import djcelery
+#  import djcelery
 
 
-djcelery.setup_loader()
-BROKER_URL = 'django://'
+#  djcelery.setup_loader()
+#  BROKER_URL = 'django://'
 
 SOCKET_SERVER_IP = "140.119.182.102"
 SOCKET_SERVER_PORT = 8080
 
+USE_REDIS = True
+# Channel settings
+ASGI_APPLICATION = 'server.routing.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+# Celery settings
+BROKER_URL = 'redis://localhost:6379/0'  # our redis address
+# use json format for everything
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -33,7 +50,7 @@ SECRET_KEY = '=4b7s6%kd_fs*+a^z*e6j@at^43zkc=r-b#9!krj!r_4+vl$-%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["172.20.10.4", "chenhuaweide-macbook-pro.local", "localhost"]
+ALLOWED_HOSTS = ["*"] 
 
 
 # Application definition
@@ -41,7 +58,7 @@ ALLOWED_HOSTS = ["172.20.10.4", "chenhuaweide-macbook-pro.local", "localhost"]
 INSTALLED_APPS = [
     'jet',
     'djcelery',
-    'djkombu',
+    #  'djkombu',
     'kombu.transport.django',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -49,6 +66,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'heart',
 
 ]
@@ -132,3 +150,30 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+# Logging
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler'
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        }
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s - %(levelname)s - %(module)s - %(message)s'
+        }
+    },
+    'loggers': {
+        'livelog': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True
+        }
+    }
+}

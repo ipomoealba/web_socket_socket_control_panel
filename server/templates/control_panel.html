@@ -3,11 +3,12 @@
 
     <head>
         <meta charset="UTF-8" />
-        <title>Control_panel</title>
+        <title>Control Panel</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-serialize-object/2.5.0/jquery.serialize-object.min.js"></script>
         <style type="text/css" media="screen">
             .header{
                 text-align: center;
@@ -28,18 +29,10 @@
                 <div class="navbar-header">
                     <a class="navbar-brand" href="#">Mumma Mia Control Panel</a>
                 </div>
-                <!--
-                - <ul class="nav navbar-nav">
-                    -     <li class="active"><a href="#">Home</a></li>
-                    -     <li><a href="#">Page 1</a></li>
-                    -     <li><a href="#">Page 2</a></li>
-                    -     <li><a href="#">Page 3</a></li>
-                    - </ul>
-                -->
             </div>
 
         </nav>
-        {% include "counter.html" %}
+        <!-- {% include "counter.html" %} -->
         <div class="container">
             <div class="row">
                 <div class="header">
@@ -66,26 +59,30 @@
                 <div class="header">
                     <h3>主控台</h3>
                 </div>
-                <form action="/control_panel" method="post" accept-charset="utf-8">
+                <!-- <form action="/" method="post" accept-charset="utf-8"> -->
                     <div class="row">
-                        {% csrf_token %}
+                        <!-- {% csrf_token %} -->
                         <div class="col-sm-3">
-                            <input type="text" class="form-control" name="ip" placeholder="IP" id="test" />
+                            <input type="text" class="form-control" name="ip" required placeholder="IP"id="ip" />
                         </div>
 
                         <div class="col-sm-3">
-                            <input type="text" class="form-control" name="command" placeholder="PORT" value="80"/>
+                            <input type="text" class="form-control" name="command" placeholder="PORT" value="80" id="port"/>
                         </div>
                         <div class="col-sm-3">
-                            <input type="text" class="form-control" name="command" placeholder="COMMAND" />
+                            <input type="text" class="form-control" name="command" placeholder="COMMAND" id="command"/>
                         </div>
 
 
                         <div class="col-sm-3">
-                            <button type="submit" class="btn btn-primary btn-block">手動指令送出</button>
+                            <button type="submit" id="command-submit" class="btn btn-primary btn-block">手動指令送出</button>
                         </div>
+
                     </div>
-                </form>
+                    <br>
+                    <textarea id="chat-log" class="form-control"  rows="10"></textarea><br/>
+
+                    <!-- </form> -->
             </div>
             <br>
             <div class="row">
@@ -93,7 +90,7 @@
                     <button type="submit" class="btn btn-success btn-block">啟動</button>
                 </div>
                 <div class="col-sm-3">
-                    <button  onclick="go()" type="submit" class="btn btn-default btn-block">鼓勵</button>
+                    <button  onclick="location.href='https://docs.google.com/spreadsheets/u/1/d/1T7mgMDfjrwEn5unD-eGnVLkolO5ZNYS6Oi5scZ5HQ58/edit#gid=1781385391'" type="submit" class="btn btn-default btn-block">畢製雜項表</button>
                 </div>
                 <div class="col-sm-3">
                     <button type="submit" class="btn btn-danger btn-block">強制終止</button>
@@ -114,37 +111,125 @@
                     <div class="col-sm-3">狀態強制變更</div>
                 </div>
                 {% for status in statuses %}
-                    <form action="/force_change_status" method="get" accept-charset="utf-8">
-
+                    <!-- <form action="/force_change_status" method="get" accept-charset="utf-8"> -->
+                    <form>
+    
                         <div class="col-sm-3">{{status.device}}</div>
-                        <div class="col-sm-3">{{status.command}}</div>
-                        <div class="col-sm-3">{{status.updated}}</div>
+                        <div class="col-sm-3" id="{{status.id}}_command">{{status.command}}</div>
+                        <div class="col-sm-3" id="{{status.id}}_updated">{{status.updated}}</div>
                         <div class="col-sm-3">
                             <div class="col-sm-8 nopadding">
                                 <div class="form-group">
-                                    <input type="hidden" value="{{status.device.id}}" name="device" id=""/>
+                                    <input type="hidden" value="{{status.device.name}}" name="name" id=""/>
+                                    <input type="hidden" value="{{status.device.ip}}" name="ip" id="ip"/>
+                                    <input type="hidden" value="{{status.device.port}}" name="port" id=""/>
+
+                                    <input type="hidden" value="{{status.device.id}}" name="device_id" id=""/>
+                                    <input type="hidden" value="command" name="type"/>
+
                                     <select class="form-control" name="command" id="changeTarget">
                                         {% for command in commands %}
                                             {% if command.device.id == status.device.id %}
-                                                <option>{{command.name}} || {{command.id}}</option>
+                                                <option>{{command.command}}||{{command.id}}</option>
                                             {% endif %}
                                         {% endfor %}
                                     </select>
                                 </div>
                             </div>
                             <div class="col-sm-4">
-                                <button type="submit" class="btn btn-default">Submit</button>
+                                <button onclick="sendBySelect(this)" type="button" class="btn btn-default">Submit</button>
                             </div>
                         </div>
                     </form>
                 {% endfor %}
             </div>
         </div>
-
     </body>
     <script charset="utf-8">
         function go() {
             alert("畢製加油!");
         }
+
+    </script>
+
+    <script charset="utf-8">
+        var chatSocket = new WebSocket(
+            'ws://' + window.location.host +
+            '/ws/status_update/status/');
+
+        chatSocket.onmessage = function(e) {
+            var data = JSON.parse(e.data);
+            var message = data['message'];
+            var ip = data['ip']
+            var name = data['name']
+            var port = data['port']
+
+            document.querySelector('#chat-log').value += ("[" + ip + ":" + port +"] " + name + " : " + message + " "  + '\n');
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#command').focus();
+        document.querySelector('#command').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#command-submit').click();
+            }
+        };
+
+        document.querySelector('#command-submit').onclick = function(e) {
+            var commandInputDom = document.querySelector('#command');
+            var command = commandInputDom.value;
+            var ipInutDom = document.querySelector('#ip');
+            var ip = ipInutDom.value;
+            var type = "command";
+            var port = document.querySelector('#port').value;
+            chatSocket.send(JSON.stringify({
+                'message': command,
+                'ip' : ip,
+                "name": "Dct Control Panel",
+                "type": type,
+                "port": port
+            }));
+
+            commandInputDom.value = '';
+            ipInutDom.value = '';
+
+        };
+
+        function sendBySelect(e){
+            var form = jQuery(e).closest("form");
+            console.log(typeof(form));
+            console.log(form.serializeObject());
+            form = form.serializeObject();
+            var command_list = form['command'].split("||");
+            var command = command_list[0];
+            var command_id = command_list[1];
+            console.log(command_list);
+            chatSocket.send(JSON.stringify({
+                'message': command,
+                'ip' : form['ip'],
+                "name": form['name'],
+                "type": form['type'],
+                "port": form['port'],
+            }));
+            $.ajax({
+                    url: '/ajax/update_device_status/',
+                    data: {
+                        'device_id': form['device_id'],
+                        'command_id': command_id
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        var status_id = data.status_id;
+                        var status_update = data.status_update;
+                        var status_command = data.status_command;
+                        $('#' + status_id + "_command").html(status_command);
+                        $('#' + status_id + "_updated").html(status_update);
+                        
+                    }
+                  });
+            };
     </script>
 </html>
