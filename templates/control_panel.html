@@ -96,7 +96,7 @@
                     <button type="submit" class="btn btn-danger btn-block">強制終止</button>
                 </div>
                 <div class="col-sm-3">
-                    <button type="submit" class="btn btn-warning btn-block">重設</button>
+                    <button type="submit" class="btn btn-warning btn-block" onclick="location.href='reset'">重設</button>
                 </div>
 
 
@@ -120,7 +120,7 @@
                         <div class="col-sm-3">
                             <div class="col-sm-8 nopadding">
                                 <div class="form-group">
-                                    <input type="hidden" value="{{status.device.name}}" name="name" id=""/>
+                                    <input type="hidden" value="{{status.device.name}}" name="name" id="device_name"/>
                                     <input type="hidden" value="{{status.device.ip}}" name="ip" id="ip"/>
                                     <input type="hidden" value="{{status.device.port}}" name="port" id=""/>
 
@@ -181,9 +181,17 @@
         document.querySelector('#command-submit').onclick = function(e) {
             var commandInputDom = document.querySelector('#command');
             var command = commandInputDom.value;
+            var name = document.querySelector('#device_name');
             var ipInutDom = document.querySelector('#ip');
             var ip = ipInutDom.value;
             var type = "command";
+            if(name === 'Unity'){
+                type = "command";
+            }else{
+                type = "request";
+            }
+            console.log(type);
+
             var port = document.querySelector('#port').value;
             chatSocket.send(JSON.stringify({
                 'message': command,
@@ -197,21 +205,55 @@
             ipInutDom.value = '';
 
         };
-
+        function deviceStatusRefresh(){
+            var device_ids = [{% for d in devices %} '{{d.id}}',  {% endfor %}];
+            for(var i=0;i<device_ids.length;i++){
+                $.ajax({
+                    url: 'ajax/status',
+                    data:{
+                        device_id: device_ids[i]
+                    },
+                    dataType: 'json',
+                    success: function(data){
+                        var status_id = data.status_id;
+                        var status_update = data.status_update;
+                        var status_command = data.status_command;
+                        $('#' + status_id + "_command").html(status_command);
+                        $('#' + status_id + "_updated").html(status_update);
+                    }
+                })
+            }
+        }
+        deviceStatusRefresh();
+        setInterval(function(){
+            deviceStatusRefresh();
+        }, 1000);
         function sendBySelect(e){
             var form = jQuery(e).closest("form");
-            console.log(typeof(form));
-            console.log(form.serializeObject());
+            <!--
+               - console.log(typeof(form));
+               - console.log(form.serializeObject());
+               -->
             form = form.serializeObject();
             var command_list = form['command'].split("||");
             var command = command_list[0];
             var command_id = command_list[1];
-            console.log(command_list);
+            <!--
+               - console.log(command_list);
+               -->
+            var name = form['name'];
+            console.log(name);
+            if(name == "Unity"){
+                type = "command";
+            }else{
+                type = "request";
+            }
+            console.log(type);
             chatSocket.send(JSON.stringify({
                 'message': command,
                 'ip' : form['ip'],
                 "name": form['name'],
-                "type": form['type'],
+                "type": type,
                 "port": form['port'],
             }));
             $.ajax({

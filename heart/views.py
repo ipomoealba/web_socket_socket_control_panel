@@ -1,17 +1,12 @@
 import requests
 
-import json
-#  from server.settings import SOCKET_SERVER_PORT, SOCKET_SERVER_IP
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
-from .models import Device, Command, Status, Rule
+from .models import Device, Command, Status, Default
 from django.http import JsonResponse
-from django.utils.safestring import mark_safe
 from .tasks import sendData
-from util.rules import automator 
+from util.rules import automator
 from util.websocket_help import replySocket
-# chat/views.py
-#  from django.shortcuts import render
 
 
 def get_client_ip(request):
@@ -57,6 +52,9 @@ def control_panel(request):
             "status": "success",
             "devices": devices,
         })
+    elif request.GET.get("STATUS", False):
+        status_update(request)
+        return JsonResponse({"status": "complete"})
     else:
         return render(request, "control_panel.html", {
             "devices": devices,
@@ -83,6 +81,17 @@ def force_change_status(request):
         return HttpResponseRedirect("/")
 
 
+def ajax_now_status(request):
+    device_id = request.GET.get("device_id", False)
+    status = Status.objects.get(device__id=device_id)
+    data = {
+        'status_id': status.id,
+        'status_update': status.updated,
+        'status_command': status.command.name,
+    }
+    return JsonResponse(data)
+
+
 def ajax_update_device_status(request):
     device_id = request.GET.get("device_id", False)
     command_id = request.GET.get("command_id", False)
@@ -96,14 +105,31 @@ def ajax_update_device_status(request):
     }
     return JsonResponse(data)
 
+
 def status_update(request):
-    device_ip = get_client_ip(request)
-    status = request.GET.get("STATUS", False)
-    if status:
-        automator(device_ip, "Unknown is o.k.", "STATUS="+status)
-        return JsonResponse({"status": "complete"})
-        
+    if request.GET.get("name", False):
+        device = Device.objects.get(name=request.GET.get("name", False))
+        device_ip = device.ip
     else:
-        replySocket(device_ip, "Unknown", "Updator" + device_ip, "Status Not Found: " + status, "error")
+        device_ip = get_client_ip(request)
+        device = Device.objects.get(ip=device_ip)
+    status = request.GET.get("STATUS", False)
+
+    if status:
+        Status.objects.filter(device_id=device.id).update(
+            command=Command.objects.get(command="STATUS="+status, device=device.id))
+        automator(device_ip, "Unknown is o.k.", "STATUS="+status, device.name)
+        return JsonResponse({"status": "complete"})
+
+    else:
+        replySocket(device_ip, "Unknown", "Updator" + device_ip,
+                    "Status Not Found: " + status, "error", device.name)
         return JsonResponse({"status": "error"})
 
+
+def reset(request):
+    default_statuses = Default.objects.all()
+    for default_status in default_statuses:
+        Status.objects.filter(device_id=default_status.device).update(
+            command=default_status.default_status)
+    return HttpResponseRedirect("/")
