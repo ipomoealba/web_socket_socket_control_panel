@@ -55,6 +55,12 @@ def control_panel(request):
     elif request.GET.get("STATUS", False):
         status_update(request)
         return JsonResponse({"status": "complete"})
+    elif request.GET.get("CHECK", False):
+        name = request.GET.get("name", False)
+        device = Device.objects.filter(name=name)
+        device.update(standBy=True)
+        device.update(ip=get_client_ip(request))
+        return JsonResponse({"status": "complete"})
     else:
         return render(request, "control_panel.html", {
             "devices": devices,
@@ -76,7 +82,7 @@ def force_change_status(request):
             sendData.delay(device.ip, device.port, command.command)
         else:
             result = requests.get(
-                "http://" + device.ip + "/" + command.command)
+                "http://" + device.ip + "/?" + command.command)
             print(result)
         return HttpResponseRedirect("/")
 
@@ -107,7 +113,9 @@ def ajax_update_device_status(request):
 
 
 def status_update(request):
-    if request.GET.get("name", False):
+    name =  request.GET.get("name", False) 
+    if name:
+        print(name)
         device = Device.objects.get(name=request.GET.get("name", False))
         device_ip = device.ip
     else:
@@ -116,8 +124,10 @@ def status_update(request):
     status = request.GET.get("STATUS", False)
 
     if status:
+        print(status)
         Status.objects.filter(device_id=device.id).update(
             command=Command.objects.get(command="STATUS="+status, device=device.id))
+        print(device_ip, "Unknown is o.k.", "STATUS="+status, device.name)
         automator(device_ip, "Unknown is o.k.", "STATUS="+status, device.name)
         return JsonResponse({"status": "complete"})
 

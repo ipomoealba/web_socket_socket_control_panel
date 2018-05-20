@@ -41,13 +41,15 @@
                 <div class="status">
                     <div style="font-weight: bold;">
                         <div class="col-sm-3">設備ID</div>
-                        <div class="col-sm-3">IP位置</div>
+                        <div class="col-sm-1">IP位置</div>
+                        <div class="col-sm-2">就緒</div>
                         <div class="col-sm-3">裝置備註</div>
                         <div class="col-sm-3">最後更新時間</div>
                     </div>
                     {% for device in devices %}
                         <div class="col-sm-3">{{device.name}}</div>
-                        <div class="col-sm-3">{{device.ip}}</div>
+                        <div class="col-sm-1">{{device.ip}}</div>
+                        <div class="col-sm-2">{{device.standBy}}</div>
                         <div class="col-sm-3">{{device.note}}</div>
                         <div class="col-sm-3">{{device.updated}}</div>
                     {% endfor %}
@@ -160,9 +162,9 @@
         chatSocket.onmessage = function(e) {
             var data = JSON.parse(e.data);
             var message = data['message'];
-            var ip = data['ip']
-            var name = data['name']
-            var port = data['port']
+            var ip = data['ip'];
+            var name = data['name'];
+            var port = data['port'];
 
             document.querySelector('#chat-log').value += ("[" + ip + ":" + port +"] " + name + " : " + message + " "  + '\n');
         };

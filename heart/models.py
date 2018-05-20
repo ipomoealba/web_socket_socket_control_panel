@@ -6,6 +6,7 @@ class Device(models.Model):
     ip = models.CharField(max_length=15)
     port = models.CharField(max_length=5, default='80')
     note = models.CharField(max_length=20, null=True)
+    standBy = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
