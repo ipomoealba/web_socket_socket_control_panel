@@ -37,7 +37,11 @@ class ClientThread(threading.Thread):
             if msg is '':
                 break
             else:
-                replySocket(ip, str(port), "Socket Server",
+                if "Skelecton" in msg:
+                    replySocket(ip, str(port), "Socket Server",
+                            msg, "play")
+                else:
+                    replySocket(ip, str(port), "Socket Server",
                             msg, "socket")
             print ("from client", msg)
             self.csocket.send(bytes(msg, 'UTF-8'))
@@ -55,7 +59,7 @@ print("Waiting for client request..")
 print("Listen in: " + LOCALHOST, PORT)
 
 while True:
-    server.listen(1)
+    server.listen(5)
     clientsock, clientAddress = server.accept()
     newthread = ClientThread(clientAddress, clientsock)
     newthread.start()

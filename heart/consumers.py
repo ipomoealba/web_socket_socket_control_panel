@@ -1,7 +1,6 @@
-# chat/consumers.py
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from .tasks import sendData, sendRequest
+from .tasks import sendData, sendRequest, playMusic
 from util.rules import automator, replySocket
 from heart.models import Rule
 import json
@@ -26,15 +25,14 @@ class StatusConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
-        print(text_data)
         text_data_json = ''
-        
+
         try:
             text_data_json = json.loads(text_data)
         except Exception as e:
             print(e)
             print("Data Type Error! Not Json Format")
-        
+
         if text_data_json:
             data_type = text_data_json['type']
             message = text_data_json['message']
@@ -54,6 +52,9 @@ class StatusConsumer(WebsocketConsumer):
                 message_header = '[Send Request]'
                 sendRequest.delay(ip, port, message)
                 automator(ip, port, message)
+            elif data_type == 'play':
+                message_header = '[Play Music]'
+                playMusic.delay('/Users/chenhuawei/Downloads/Skelecton.mp3')
             elif data_type == 'socket':
                 message_header = '[Get Socket Message]'
                 try:

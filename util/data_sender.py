@@ -9,6 +9,7 @@ class DataSender(object):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect(self):
+        self.sock.settimeout(15)
         self.sock.connect((self.ip, self.port))
 
     def send(self, data):

@@ -4,9 +4,14 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from .models import Device, Command, Status, Default
 from django.http import JsonResponse
-from .tasks import sendData
+from .tasks import sendData, playMusic
 from util.rules import automator
 from util.websocket_help import replySocket
+
+
+def fuckMusic(request):
+    playMusic.delay(request.GET.get("path", False))
+    return JsonResponse({"success": True})
 
 
 def get_client_ip(request):
@@ -113,7 +118,7 @@ def ajax_update_device_status(request):
 
 
 def status_update(request):
-    name =  request.GET.get("name", False) 
+    name = request.GET.get("name", False)
     if name:
         print(name)
         device = Device.objects.get(name=request.GET.get("name", False))
@@ -124,7 +129,7 @@ def status_update(request):
     status = request.GET.get("STATUS", False)
 
     if status:
-        print(status)
+        print(status, device.id)
         Status.objects.filter(device_id=device.id).update(
             command=Command.objects.get(command="STATUS="+status, device=device.id))
         print(device_ip, "Unknown is o.k.", "STATUS="+status, device.name)
@@ -137,9 +142,20 @@ def status_update(request):
         return JsonResponse({"status": "error"})
 
 
+def getDeviceStatus(request):
+    device = Device.objects.get(id=requests.GET.get("devive_id"))
+    return JsonResponse({
+        'id': device.id,
+        'standBy': device.standBy
+    })
+
+
 def reset(request):
     default_statuses = Default.objects.all()
+    device = Device.objects.all()
+    device.update(standBy=False)
     for default_status in default_statuses:
         Status.objects.filter(device_id=default_status.device).update(
             command=default_status.default_status)
+
     return HttpResponseRedirect("/")
