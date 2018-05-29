@@ -23,8 +23,7 @@ def replySocketAsync(ip, port, name, message, data_type):
 def sendRequest(ip, port, message, name="Task Return"):
     try:
         url = "http://" + ip + ":" + port + "/?" + message
-        print(url)
-        result = requests.get(url, timeout=15)
+        result = requests.get(url)
         message = result
         replySocket(ip, port, name, message, "return")
     except Exception as e:
