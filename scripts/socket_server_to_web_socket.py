@@ -38,11 +38,15 @@ class ClientThread(threading.Thread):
                 break
             else:
                 if "Skelecton" in msg:
+                    
                     replySocket(ip, str(port), "Socket Server",
-                            msg, "play")
+                                msg, "play")
                 else:
+                    if 'scene' in msg:
+                        msg = (msg[:msg.index("scene")] + 'loadS' + \
+                            msg[msg.index("scene") + 1:]).replace("'", '"')
                     replySocket(ip, str(port), "Socket Server",
-                            msg, "socket")
+                                msg, "socket")
             print ("from client", msg)
             self.csocket.send(bytes(msg, 'UTF-8'))
         self.csocket.close()

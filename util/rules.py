@@ -16,11 +16,14 @@ def automator(ip, port, message, device_name="UnKnown"):
                         data_type="return")
 
         else:
+            device_status = Device.objects.filter(ip=ip)
+            print(message)
             pre_step_command = Command.objects.filter(
                 command__contains=message.replace(" ", ""),
                 device__ip=ip)
-            device_status = Device.objects.filter(
-                id=pre_step_command[0].device.id)
+            #  device_status = Device.objects.filter(
+                #  id=pre_step_command[0].device.id)
+            replySocket(ip, port, "test", str(pre_step_command), "return")
             device_status.update(standBy=True)
             if pre_step_command.count() > 0:
                 pre_step_command = pre_step_command[0]
@@ -37,10 +40,12 @@ def automator(ip, port, message, device_name="UnKnown"):
                                     '{"Stele":1}',
                                     "command")
                     else:
-                        pass
+                        replySocket(ip, port, "localhost", "Stele Not Complete", "return")
                 else:
                     next_step = Rule.objects.filter(
                         device=pre_step_device, pre_step=pre_step_command)
+
+                    replySocket(ip, port, "test", str(next_step), "return")
                     if next_step.count() > 0:
                         next_step = next_step.first()
                         constrict = Restrict.objects.filter(
@@ -54,10 +59,12 @@ def automator(ip, port, message, device_name="UnKnown"):
                                 do_next_step = False
                         else:
                             do_next_step = True
+                    else: 
+                        replySocket("localhost", "8000", "Automator -> can not find next step", "None", "return" ) 
             else:
                 replySocket("localhost",
                             "8000",
-                            "Automator -> There is no next step",
+                            "Automator -> Step Command Error",
                             "None",
                             data_type="return")
 

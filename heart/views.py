@@ -58,7 +58,7 @@ def control_panel(request):
             "devices": devices,
         })
     elif request.GET.get("STATUS", False):
-        status_update(request)
+        status_update(request) 
         return JsonResponse({"status": "complete"})
     elif request.GET.get("CHECK", False):
         name = request.GET.get("name", False)

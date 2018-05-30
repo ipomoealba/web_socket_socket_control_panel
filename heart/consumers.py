@@ -54,13 +54,11 @@ class StatusConsumer(WebsocketConsumer):
                 automator(ip, port, message)
             elif data_type == 'play':
                 message_header = '[Play Music]'
-                playMusic.delay('/Users/chenhuawei/Downloads/Skelecton.mp3')
+                playMusic.delay('/Users/dct/server 17/media/Skelecton.mp3')
             elif data_type == 'socket':
                 message_header = '[Get Socket Message]'
-                try:
-                    automator(ip, port, message)
-                except:
-                    pass
+                automator(ip, port, message)
+		
             elif data_type == 'error':
                 message_header = '[!!!]'
             elif data_type == 'return':
