@@ -19,7 +19,7 @@ def automator(ip, port, message, device_name="UnKnown"):
             device_status = Device.objects.filter(ip=ip)
             print(message)
             pre_step_command = Command.objects.filter(
-                command__contains=message.replace(" ", ""),
+                command__contains=message.replace(" ", "").replace('\'', '"'),
                 device__ip=ip)
             #  device_status = Device.objects.filter(
                 #  id=pre_step_command[0].device.id)
